@@ -14,20 +14,6 @@ class URL extends Model {
     protected $table = 'urls';
 
     /**
-     * The attributes excluded from the model's JSON form.
-     *
-     * @var array
-     */
-    protected $hidden = array();
-
-    /**
-     * The attributes that can't be mass assigned
-     *
-     * @var array
-     */
-    protected $guarded = array('id');
-
-    /**
      * @var array
      */
     protected static $dontDuplicate = array(array('uri', 'domain'));

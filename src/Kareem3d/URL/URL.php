@@ -11,33 +11,12 @@ class URL extends Model {
      *
      * @var string
      */
-    protected $table = 'urls';
+    protected $table = 'ka_urls';
 
     /**
      * @var array
      */
-    protected static $dontDuplicate = array(array('uri', 'domain'));
-
-    /**
-     * @var URL|null
-     */
-    protected static $currentUrl = null;
-
-    /**
-     * @return string
-     */
-    public static function getCurrentUri()
-    {
-        return urldecode(Request::path());
-    }
-
-    /**
-     * @return mixed
-     */
-    public static function getCurrentDomain()
-    {
-        return Request::server('SERVER_NAME');
-    }
+    protected static $dontDuplicate = array('url');
 
     /**
      * @param $url
@@ -45,127 +24,75 @@ class URL extends Model {
      */
     public static function getByUrl( $url )
     {
-        $url = parse_url($url);
-
-        return static::getByUriAndDomain($url['path'], $url['host']);
-    }
-
-    /**
-     * @return URL
-     */
-    public static function getCurrent()
-    {
-        if(! static::$currentUrl)
-
-            static::$currentUrl = static::getByUriAndDomain(static::getCurrentUri(), static::getCurrentDomain());
-
-        return static::$currentUrl;
-    }
-
-    /**
-     * @param $uri
-     * @param $domain
-     * @return URL
-     */
-    public static function getByUriAndDomain( $uri, $domain )
-    {
-        return static::where(function(Builder $query) use($uri)
-        {
-            $query->where('uri', $uri)->orWhere('uri', trim($uri, '/'));
-
-        })->where(function(Builder $query) use($domain)
-        {
-            $query->where('domain', $domain)->orWhere('domain', '')->orWhere('domain', NULL);
-
-        })->first();
-    }
-
-    /**
-     * @param string $uri
-     * @return bool
-     */
-    public static function isActive( $uri )
-    {
-        if(filter_var($uri, FILTER_VALIDATE_URL)) {
-
-            return static::getCurrent()->saveUrl( $uri );
-        }
-
-        return static::getCurrent()->sameUri( $uri );
-    }
-
-    /**
-     * @param $uri
-     * @return bool
-     */
-    public function sameUrl( $url )
-    {
-        $url = parse_url($url);
-
-        return $this->domain == $url['host'] && $this->sameUri($url['path']);
-    }
-
-    /**
-     * @param $uri
-     * @return bool
-     */
-    public function sameUri( $uri )
-    {
-        return trim($this->uri, '/') == trim($uri, '/');
+        return static::where('url', $url)->orWhere('url', trim($url, '/'))->first();
     }
 
     /**
      * @param $url
-     * @return void
+     * @return bool
      */
-    public function setUrlAttribute( $url )
+    public function samePath( $url )
     {
         $url = parse_url($url);
 
-        $this->uri = $url['path'];
-        $this->domain = $url['host'];
+        return $this->path === $url['path'];
     }
 
     /**
-     * @param $uri
-     * @return void
-     */
-    public function setUriAttribute( $uri )
-    {
-        $this->attributes['uri'] = trim($uri, '/');
-    }
-
-    /**
-     * @param $domain
-     * @return void
-     */
-    public function setDomainAttribute( $domain )
-    {
-        if($domain == static::getCurrentDomain()) return;
-
-        $this->attributes['domain'] = $domain;
-    }
-
-    /**
-     * Get full url => $domain.'/'.$uri
-     *
-     * @return string
-     */
-    public function getUrl()
-    {
-        if($this->domain)
-
-            return rtrim($this->domain, '/') . '/' . ltrim($this->uri, '/');
-
-        return rtrim(static::getCurrentDomain(), '/') . '/' . ltrim($this->uri, '/');
-    }
-
-    /**
+     * @param $url
      * @return bool
      */
-    public function hasDomain()
+    public function sameHost( $url )
     {
-        return $this->domain != null;
+        $url = parse_url($url);
+
+        return $this->host === $url['host'];
+    }
+
+    /**
+     * @param $url
+     * @return bool
+     */
+    public function sameUrl( $url )
+    {
+        return $this->url === $url;
+    }
+
+    /**
+     * @param $path
+     * @return void
+     */
+    public function setPathAttribute( $path )
+    {
+        $this->url = rtrim($this->host, '/') . '/' . trim($path, '/');
+    }
+
+    /**
+     * @param $host
+     */
+    public function setHostAttribute( $host )
+    {
+        $this->url = rtrim($host, '/') . '/' . trim($this->path);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPathAttribute()
+    {
+        $url = parse_url($this->url);
+
+        return $url['path'];
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHostAttribute()
+    {
+        $url = parse_url($this->url);
+
+        return $url['host'];
     }
 
     /**
@@ -173,6 +100,6 @@ class URL extends Model {
      */
     public function __toString()
     {
-        return $this->getUrl();
+        return $this->url;
     }
 }

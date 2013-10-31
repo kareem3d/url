@@ -12,12 +12,11 @@ class CreateUrlsTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('urls', function(Blueprint $table)
+		Schema::create('ka_urls', function(Blueprint $table)
 		{
 			$table->increments('id');
 
-            $table->string('uri')->default('/');
-            $table->string('domain')->nullable();
+            $table->string('url');
 
 			$table->timestamps();
 		});
@@ -30,7 +29,7 @@ class CreateUrlsTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('urls');
+		Schema::drop('ka_urls');
 	}
 
 }
